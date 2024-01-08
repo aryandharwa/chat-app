@@ -5,6 +5,7 @@ import axios from 'axios';
 import Contacts from '../components/Contacts';
 import { allUsersRoute } from '../utils/APIRoutes';
 import Welcome from '../components/Welcome';
+import { ChatContainer } from '../components/ChatContainer';
 
 function Chat() {
 
@@ -12,6 +13,7 @@ function Chat() {
   const [contacts, setContacts] = useState([]);
   const [currentUser, setCurrentUser] = useState(undefined);
   const [currentChat, setCurrentChat] = useState(undefined);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,6 +22,7 @@ function Chat() {
       } else {
         const user = await JSON.parse(localStorage.getItem('chat-app-user'));
         setCurrentUser(user);
+        setIsLoaded(true);
       }
     };
 
@@ -54,10 +57,13 @@ function Chat() {
           changeChat={handleChatChange}    
         />
 
-        <Welcome 
-          currentUser={currentUser} 
-          currentChat={currentChat}
-        />  
+        {isLoaded && currentChat === undefined ? (
+            <Welcome 
+              currentUser={currentUser}
+            />
+          ) : (
+            <ChatContainer currentChat={currentChat} />
+          )} 
 
       </div>
     </Container>
