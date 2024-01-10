@@ -5,7 +5,7 @@ const userRoutes = require('./routes/userRoutes');
 const { parse } = require('path');
 const bodyParser = require('body-parser');
 const User = require('./model/userModel');
-const { register, login } = require('./controllers/usersController');
+const messageRoute = require('./routes/messagesRoute');
 
 const app = express();
 require('dotenv').config();
@@ -15,6 +15,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use("/api/auth", userRoutes);
+app.use("/api/messages", messageRoute);
 
 mongoose.connect(process.env.MONGO_URL).then(() => {
     console.log('Connected to MongoDB');
