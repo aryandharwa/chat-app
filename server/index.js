@@ -6,6 +6,7 @@ const { parse } = require('path');
 const bodyParser = require('body-parser');
 const User = require('./model/userModel');
 const messageRoute = require('./routes/messagesRoute');
+const socket = require('socket.io');
 
 const app = express();
 require('dotenv').config();
@@ -49,4 +50,27 @@ mongoose.connect(process.env.MONGO_URL).then(() => {
 
 const server = app.listen(process.env.PORT, () => {
     console.log(`Server is running on port: ${process.env.PORT}`);
+});
+
+const io = socket(server, {
+    cors: {
+        origin: 'https://localhost:3000',
+        credentials : true,
+    }
+});
+
+global.onlineUsers = new Map();
+
+io.on("connection", (socket) => {
+    global.chatSocket = socket;
+    socket.on("add-user", (userId) => {
+        onlineUsers.set(userId, socket.id);
+    });
+
+    socket.on("send-message", (message) => {
+        const sendUserSocket = onlineUsers.get(data.to);
+        if (sendUserSocket) {
+            socket.to(sendUserSocket).emit("msg-receive", data.message);
+        }
+    });
 });

@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Logout } from './Logout';
 import { ChatInput } from './ChatInput';
-import { Messages } from './Messages';
 import { getAllMessagesRoute, sendMessageRoute } from '../utils/APIRoutes';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
-export const ChatContainer = ({ currentChat, currentUser }) => {
+export const ChatContainer = ({ currentChat, currentUser, socket }) => {
   const [messages, setMessages] = useState([]);
+  const [arrivalMessage, setArrivalMessage] = useState(null);
+
+  const scrollRef = useRef();
 
   useEffect(() => {
     async function fetchData() {
@@ -85,7 +88,34 @@ export const ChatContainer = ({ currentChat, currentUser }) => {
     } catch (error) {
       console.error('Error sending message:', error);
     }
+    socket.current.emit('send-message', {
+      to: currentChat._id,
+      from: currentUser._id,
+      message: msg,
+    });
+
+    const msgs = [...messages];
+    msgs.push({fromSelf: true, message: msg});
+    setMessages(msgs);
   };
+
+  useEffect(() => {
+    if (socket.current) {
+      socket.current.on("msg-receive", (msg) => {
+        setArrivalMessage({ fromSelf: false, message: msg });
+      })
+    }
+  }, []);
+
+  useEffect(() => {
+    arrivalMessage && setMessages((prev) => [...prev, arrivalMessage]);
+  }, [arrivalMessage]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+        scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+}, [messages]);
 
   return (
     <>
@@ -107,8 +137,9 @@ export const ChatContainer = ({ currentChat, currentUser }) => {
             <Logout />
           </div>
           <div className="chat-messages">
-            {messages.map((message) => (
-              <div key={message._id}>
+            {messages.map((message) => {
+              return (
+              <div ref={scrollRef} key={uuidv4()} >
                 <div className={`message ${message.fromSelf ? 'sended' : 'received'}`}>
                   <div className="content">
                     <p>{message.message}</p>
@@ -116,7 +147,8 @@ export const ChatContainer = ({ currentChat, currentUser }) => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
           <ChatInput handleSendMsg={handleSendMsg} />
         </Container>
@@ -161,6 +193,14 @@ const Container = styled.div`
     flex-direction: column;
     gap: 1rem;
     overflow: auto;
+    &::-webkit-scrollbar {
+      width: 0.2rem;
+      &-thumb {
+        background-color: #ffffff39;
+        width: 0.1rem;
+        border-radius: 1rem;
+      }
+    }
     .message {
       display: flex;
       align-items: center;
