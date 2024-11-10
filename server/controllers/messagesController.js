@@ -18,30 +18,24 @@ module.exports.addMessage = async (req, res, next) => {
 };
 
 
-module.exports.getAllMessage = async (req, res, next) => {
-    try {
-        const { from, to } = req.body;
-        console.log('Get All Messages Request:', { from, to });
+module.exports.getAllMessages = async (req, res, next) => {
+  try {
+    const { from, to } = req.body;
 
-        const messages = await messageModel
-            .find({
-                $or: [
-                    { sender: from, receiver: to },
-                    { sender: to, receiver: from },
-                ],
-            })
-            .sort({ createdAt: 1 });
+    const messages = await Messages.find({
+      users: {
+        $all: [from, to],
+      },
+    }).sort({ updatedAt: 1 });
 
-        console.log('Fetched Messages:', messages);
-
-        const projectMessages = messages.map((msg) => ({
-            fromSelf: msg.sender.equals(from),
-            message: msg.message,
-        }));
-
-        return res.json({ messages: projectMessages }); // Send the response here
-    } catch (ex) {
-        console.error('Error in getAllMessage:', ex);
-        next(ex);
-    }
+    const projectedMessages = messages.map((msg) => {
+      return {
+        fromSelf: msg.sender.toString() === from,
+        message: msg.message.text,
+      };
+    });
+    res.json(projectedMessages);
+  } catch (ex) {
+    next(ex);
+  }
 };

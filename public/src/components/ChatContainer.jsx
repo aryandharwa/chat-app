@@ -13,65 +13,78 @@ export const ChatContainer = ({ currentChat, currentUser, socket }) => {
   const scrollRef = useRef();
 
   useEffect(() => {
-    async function fetchData() {
-        try {
-            // Check if currentUser and currentChat are truthy before making the request
-            if (currentUser && currentChat) {
-                const res = await axios.post(getAllMessagesRoute, {
-                    from: currentUser._id,
-                    to: currentChat._id,
-                });
-                console.log('Server Response:', res.data);
-                setMessages(res.data.messages);
-            }
-        } catch (error) {
-            console.error('Error fetching messages:', error);
+    const fetchData = async () => {
+      try {
+        const data = await JSON.parse(localStorage.getItem("chat-app-user"));
+        console.log('Fetching messages for user:', data);
+        const response = await axios.post(getAllMessagesRoute, {
+          from: data._id,
+          to: currentChat._id,
+        });
+        console.log('Server Response:', response);
+  
+        // Check if response.data is an array before setting messages
+        if (Array.isArray(response.data)) {
+          setMessages(response.data);
+        } else {
+          console.error('Invalid data format received:', response.data);
         }
-    }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      }
+    };
+  
     fetchData();
-}, [currentChat, currentUser?._id]);
-
-
-
+  }, [currentChat]);
 
   // useEffect(() => {
   //   const fetchData = async () => {
   //     try {
-  //       if (currentChat && currentUser?._id) {
-  //         const res = await axios.post(getAllMessagesRoute, {
-  //           from: currentUser._id,
-  //           to: currentChat._id,
-  //         });
-  //         console.log('Messages from API:', res);
-  //         setMessages(res.data);
-  //       }
+  //       const data = await JSON.parse(localStorage.getItem("chat-app-user"));
+  //       const response = await axios.post(getAllMessagesRoute, {
+  //         from: data._id,
+  //         to: currentChat._id,
+  //       });
+  //       setMessages(response.data);
   //     } catch (error) {
   //       console.error('Error fetching messages:', error);
   //     }
   //   };
-
+  
   //   fetchData();
-  // }, [currentChat, currentUser?._id]);
+  // }, [currentChat]);
+  
 
-  // console.log('Messages state:', messages);
+  // useEffect(async () => {
+  //   const data = await JSON.parse(
+  //     localStorage.getItem("chat-app-user")
+  //   );
+  //   const response = await axios.post(getAllMessagesRoute, {
+  //     from: data._id,
+  //     to: currentChat._id,
+  //   });
+  //   setMessages(response.data);
+  // }, [currentChat]);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       if (currentChat && currentUser?._id) {
-  //         const res = await axios.post(getAllMessagesRoute, {
-  //           from: currentUser._id,
-  //           to: currentChat._id,
-  //         });
-  //         setMessages(res.data);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching messages:', error);
-  //     }
-  //   };
+//   useEffect(() => {
+//     async function fetchData() {
+//         try {
+//             // Check if currentUser and currentChat are truthy before making the request
+//             if (currentUser && currentChat) {
+//                 const res = await axios.post(getAllMessagesRoute, {
+//                     from: currentUser._id,
+//                     to: currentChat._id,
+//                 });
+//                 console.log('Server Response:', res.data);
+//                 setMessages(res.data.messages);
+//             }
+//         } catch (error) {
+//             console.error('Error fetching messages:', error);
+//         }
+//     }
+//     fetchData();
+// }, [currentChat, currentUser._id]);
 
-  //   fetchData();
-  // }, [currentChat, currentUser?._id]);
 
   const handleSendMsg = async (msg) => {
     console.log('Sending message:', msg);
